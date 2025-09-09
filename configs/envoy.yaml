@@ -18,7 +18,7 @@ static_resources:
               domains: ["*"]
               routes:
               - match: { prefix: "/" }
-                route: { host_rewrite: www.bilibili.com, cluster: service_bili }
+                route: { host_rewrite_literal: www.bilibili.com, cluster: service_bili }
           http_filters:
           - name: envoy.router
 
@@ -28,7 +28,7 @@ static_resources:
     type: STRICT_DNS
     lb_policy:  ROUND_ROBIN
     load_assignment:
-      cluster_name: service_baidu
+      cluster_name: service_bili
       endpoints:
       - lb_endpoints:
         - endpoint:
