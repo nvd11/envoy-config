@@ -7,8 +7,10 @@ static_resources:
     filter_chains:
     - filters:
       - name: envoy.http_connection_manager
-        config:
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
           stat_prefix: ingress_http
+
           route_config:
             name: local_route
             virtual_hosts:
@@ -24,7 +26,7 @@ static_resources:
   - name: service_bili
     connect_timeout: 0.25s
     type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
+    lb_policy:  ROUND_ROBIN
     load_assignment:
       cluster_name: service_baidu
       endpoints:
