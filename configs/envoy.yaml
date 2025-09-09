@@ -4,8 +4,7 @@ static_resources:
     address:
       socket_address: { address:10.0.1.223, port_value: 10000 }
 
-
-   filter_chains:
+    filter_chains:
     - filters:
       - name: envoy.http_connection_manager
         config:
