@@ -12,11 +12,12 @@ RUN apt-get update && apt-get install -y \
     dnsutils \
     net-tools \
     iproute2 \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# 添加Envoy的APT仓库
+# 添加Envoy的APT仓库（使用硬编码的Ubuntu版本代号）
 RUN curl -sL 'https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key' | gpg --dearmor -o /usr/share/keyrings/getenvoy-keyring.gpg
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/getenvoy.list
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu jammy main" > /etc/apt/sources.list.d/getenvoy.list
 
 # 安装Envoy
 RUN apt-get update && apt-get install -y getenvoy-envoy && rm -rf /var/lib/apt/lists/*
@@ -24,8 +25,8 @@ RUN apt-get update && apt-get install -y getenvoy-envoy && rm -rf /var/lib/apt/l
 # 创建Envoy配置目录
 RUN mkdir -p /etc/envoy
 
-# 复制默认配置文件（可选，您可能需要挂载自己的配置文件）
-# COPY envoy.yaml /etc/envoy/
+# 复制Envoy配置文件
+COPY envoy.yaml /etc/envoy/
 
 # 暴露Envoy的默认端口
 EXPOSE 9901 10000
@@ -34,5 +35,3 @@ EXPOSE 9901 10000
 CMD ["envoy", "-c", "/etc/envoy/envoy.yaml", "--service-cluster", "my-cluster"]
 
 # 健康检查（可选）
-HEALTHCHECK --interval=30s --timeout=5s \
-    CMD curl -f http://localhost:9901/server_info || exit 1
