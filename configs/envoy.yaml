@@ -21,6 +21,9 @@ static_resources:
                 route: { host_rewrite_literal: www.bilibili.com, cluster: service_bili }
           http_filters:
           - name: envoy.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
 
   clusters:
   - name: service_bili
