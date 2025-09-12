@@ -39,9 +39,8 @@ static_resources:  # Static resources configuration
               - match:  # Match conditions
                   prefix: "/"  # Match all paths (prefix)
                 redirect:  # Redirect action
-                  host_redirect: "www.bilibili.com"  # Redirect target host
-                  scheme_redirect: "https"  # Redirect to HTTPS scheme
-                  response_code: TEMPORARY_REDIRECT  # 302 temporary redirect
+                  cluster: bilibili_cluster  # 使用下面定义的集群
+
 
   clusters:  # Upstream clusters configuration
   - name: bilibili_cluster  # Cluster name
