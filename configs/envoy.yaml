@@ -26,8 +26,6 @@ static_resources:
           - name: envoy.access_loggers.stdout
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
-              output_format:
-                format: '[%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION%ms %UPSTREAM_SERVICE_TIME%ms "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%" %UPSTREAM_HOST%\n'
           route_config:
           http_filters:
           - name: envoy.filters.http.router
