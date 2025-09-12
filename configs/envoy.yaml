@@ -27,14 +27,20 @@ static_resources:  # Static resources configuration
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog  # Stdout access log type
           http_filters:  # HTTP filters chain
-          - name: envoy.filters.http.lua
+          - name: envoy.filters.http.header_to_metadata
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-              inline_code: |
-                function envoy_on_request(request_handle)
-                  -- 修改 Host 头为 bilibili 的域名
-                  request_handle:headers():replace("Host", "www.bilibili.com")
-                endv
+              "@type": type.googleapis.com/envoy.extensions.filters.http.header_to_metadata.v3.Config
+              request_rules:
+              - header: Host
+                on_header_present:
+                  metadata_namespace: envoy.filters.http.header_to_metadata
+                  key: host
+                  type: STRING
+                apply_rules:
+                - key: host_override
+                  value: "www.bilibili.com"
+                  type: STRING
+
           - name: envoy.filters.http.router  # HTTP router filter
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router  # Router filter type
