@@ -5,7 +5,7 @@ docker run --name=envoy -d \
   envoyproxy/envoy:v1.33-latest
 
 
-docker stop envoy; docker rm $(docker ps -aq -f status=exited); docker run --name=envoy -d   -p 80:10000   -v /home/gateman/projects/envoy-config/configs/envoy.yaml:/etc/envoy/envoy.yaml   envoyproxy/envoy:v1.33-latest
+docker stop envoy; docker rm $(docker ps -aq -f status=exited); docker run --name=envoy -d   -p 10000:10000 -p 9901:9901  -v /home/gateman/projects/envoy-config/configs/envoy.yaml:/etc/envoy/envoy.yaml   envoyproxy/envoy:v1.33-latest
 
 docker build -t envoy-ubuntu .
 
