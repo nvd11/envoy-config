@@ -32,13 +32,12 @@ static_resources:  # Static resources configuration
               "@type": type.googleapis.com/envoy.extensions.filters.http.header_to_metadata.v3.Config
               request_rules:
               - header: Host
+                # 始终覆盖Host头，不管原来是否存在
+                behavior: REPLACE_ALL
                 on_header_present:
                   metadata_namespace: envoy.filters.http.header_to_metadata
-                  key: host
-                  type: STRING
-                apply_rules:
-                - key: host_override
-                  value: "www.bilibili.com"
+                  key: host_override
+                  value: "www.bilibili.com"  # 设置新的Host值
                   type: STRING
 
           - name: envoy.filters.http.router  # HTTP router filter
