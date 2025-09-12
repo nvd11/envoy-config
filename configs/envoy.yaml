@@ -39,7 +39,10 @@ static_resources:  # Static resources configuration
               - match:  # Match conditions
                   prefix: "/"  # Match all paths (prefix)
                 route:  # Redirect action
-                  cluster: bilibili_cluster  # 使用下面定义的集群
+                    cluster: bilibili_cluster
+                    request_headers_to_add:
+                    - header: { key: "Host", value: "www.bilibili.com" }
+                      append: false #The append: false setting, within the context of request_headers_to_add in Envoy, controls how a header is handled when a header with the same key already exists in the request.
 
 
   clusters:  # Upstream clusters configuration
