@@ -31,18 +31,18 @@ static_resources:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-        route_config:
-          name: local_route
-          virtual_hosts:
-          - name: bilibili_redirect
-            domains: ["*"]
-            routes:
-            - match:
-                prefix: "/"
-                redirect:
-                host_redirect: "www.bilibili.com"
-                scheme_redirect: "https"
-                response_code: TEMPORARY_REDIRECT
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: bilibili_redirect
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/"
+                  redirect:
+                  host_redirect: "www.bilibili.com"
+                  scheme_redirect: "https"
+                  response_code: TEMPORARY_REDIRECT
 
   clusters:
   - name: bilibili_cluster
