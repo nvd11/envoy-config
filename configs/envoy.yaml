@@ -38,7 +38,7 @@ static_resources:  # Static resources configuration
               routes:  # Route rules
               - match:  # Match conditions
                   prefix: "/"  # Match all paths (prefix)
-                redirect:  # Redirect action
+                route:  # Redirect action
                   cluster: bilibili_cluster  # 使用下面定义的集群
 
 
