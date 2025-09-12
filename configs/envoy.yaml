@@ -27,6 +27,14 @@ static_resources:  # Static resources configuration
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog  # Stdout access log type
           http_filters:  # HTTP filters chain
+          - name: envoy.filters.http.lua
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+              inline_code: |
+                function envoy_on_request(request_handle)
+                  -- 修改 Host 头为 bilibili 的域名
+                  request_handle:headers():replace("Host", "www.bilibili.com")
+                endv
           - name: envoy.filters.http.router  # HTTP router filter
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router  # Router filter type
@@ -40,9 +48,7 @@ static_resources:  # Static resources configuration
                   prefix: "/"  # Match all paths (prefix)
                 route:  # Redirect action
                     cluster: bilibili_cluster
-                    request_headers_to_add:
-                    - header: { key: "Host", value: "www.bilibili.com" }
-                      append: false #The append: false setting, within the context of request_headers_to_add in Envoy, controls how a header is handled when a header with the same key already exists in the request.
+                
 
 
   clusters:  # Upstream clusters configuration
