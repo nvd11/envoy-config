@@ -37,7 +37,7 @@ static_resources:  # Static resources configuration
                   local token = file:read("*a")
                   file:close()
                   request_handle:headers():add("Authorization", "Bearer " .. token)
-                  request_handle:headers():replace("Host", "www.bilibili.com")
+                  # request_handle:headers():replace("Host", "www.bilibili.com")
                 end
 
           - name: envoy.filters.http.router  # HTTP router filter
@@ -46,7 +46,7 @@ static_resources:  # Static resources configuration
           route_config:  # Route configuration
             name: local_route  # Route configuration name
             virtual_hosts:  # Virtual hosts list
-            - name: bilibili_redirect  # Virtual host name
+            - name: bilibili_redirect  # Virtual host name  
               domains: ["*"]  # Match all domains
               routes:  # Route rules
               - match:  # Match conditions
@@ -69,7 +69,7 @@ static_resources:  # Static resources configuration
         - endpoint:  # Single endpoint
             address:  # Endpoint address
               socket_address:  # Socket address
-                address: www.bilibili.com  # Upstream server address
+                address: myui-912156613264.europe-west2.run.app # Upstream server address
                 port_value: 443  # Upstream HTTPS port
     transport_socket:  # Transport socket configuration
       name: envoy.transport_sockets.tls  # TLS transport socket
