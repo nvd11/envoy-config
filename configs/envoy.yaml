@@ -46,24 +46,24 @@ static_resources:  # Static resources configuration
           route_config:  # Route configuration
             name: local_route  # Route configuration name
             virtual_hosts:  # Virtual hosts list
-            - name: bilibili_redirect  # Virtual host name  
+            - name: myui_redirect  # Virtual host name  
               domains: ["*"]  # Match all domains
               routes:  # Route rules
               - match:  # Match conditions
                   prefix: "/"  # Match all paths (prefix)
                 route:  # Redirect action
-                    cluster: bilibili_cluster
+                    cluster: myui_cluster
                 
 
 
   clusters:  # Upstream clusters configuration
-  - name: bilibili_cluster  # Cluster name
+  - name: myui_cluster  # Cluster name
     connect_timeout: 5s  # Connection timeout
     type: LOGICAL_DNS  # Service discovery type: logical DNS
     dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
     lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
     load_assignment:  # Load assignment configuration
-      cluster_name: bilibili_cluster  # Cluster name reference
+      cluster_name: myui_clusterss  # Cluster name reference
       endpoints:  # Endpoints list
       - lb_endpoints:  # Load balancing endpoints
         - endpoint:  # Single endpoint
