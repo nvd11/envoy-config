@@ -37,7 +37,7 @@ static_resources:  # Static resources configuration
                   local token = file:read("*a")
                   file:close()
                   request_handle:headers():add("Authorization", "Bearer " .. token)
-                  # request_handle:headers():replace("Host", "www.bilibili.com")
+                  request_handle:headers():replace("Host", "yui-912156613264.europe-west2.run.app")
                 end
 
           - name: envoy.filters.http.router  # HTTP router filter
