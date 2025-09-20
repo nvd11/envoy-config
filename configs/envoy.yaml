@@ -26,33 +26,32 @@ static_resources:  # Static resources configuration
           - name: envoy.access_loggers.stdout  # Stdout access logger
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog  # Stdout access log type
-          http_filters:  # HTTP filters chain
-          - name: envoy.filters.http.header_to_metadata
+          http_filters:
+          - name: envoy.filters.http.header_mutation
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-              inline_code: |                
-                function envoy_on_request(request_handle)
-                  local cmd = "/usr/bin/gcloud auth print-identity-token"
-                  local file = io.popen(cmd, "r")
-                  local token = file:read("*a")
-                  file:close()
-                  request_handle:headers():add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkpJUkVJOWc3cFhZMDN0VTB6TzBKbEEiLCJpYXQiOjE3NTgzMzg5NDIsImV4cCI6MTc1ODM0MjU0Mn0.SIGNATURE_REMOVED_BY_GOOGLE","x-cloud-trace-context":"4be55111dcfd29952400543b33bed9df/14774873356387063048;o=1)
-                  request_handle:headers():replace("Host", "py-api-svc-912156613264.europe-west2.run.app")
-                end
-
-          - name: envoy.filters.http.router  # HTTP router filter
+              "@type": type.googleapis.com/envoy.extensions.filters.http.header_mutation.v3.HeaderMutation
+              request_headers_to_add:
+              - header:
+                  name: "authorization"
+                  value: "bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkpJUkVJOWc3cFhZMDN0VTB6TzBKbEEiLCJpYXQiOjE3NTgzMzg5NDIsImV4cCI6MTc1ODM0MjU0Mn0.SIGNATURE_REMOVED_BY_GOOGLE"
+                append: false
+              - header:
+                  name: "host"
+                  value: "py-api-svc-912156613264.europe-west2.run.app"
+                append: false
+          - name: envoy.filters.http.router
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router  # Router filter type
-          route_config:  # Route configuration
-            name: local_route  # Route configuration name
-            virtual_hosts:  # Virtual hosts list
-            - name: myui_redirect  # Virtual host name  
-              domains: ["*"]  # Match all domains
-              routes:  # Route rules
-              - match:  # Match conditions
-                  prefix: "/"  # Match all paths (prefix)
-                route:  # Redirect action
-                    cluster: myui_cluster
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: myui_redirect
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: myui_cluster
                 
 
 
