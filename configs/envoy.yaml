@@ -32,8 +32,8 @@ static_resources:  # Static resources configuration
               "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
               inline_code: |
                 function envoy_on_request(request_handle)
-                  request_handle:headers():add("x-custom-header", "value1")
-                  request_handle:headers():add("x-another-header", "value2")
+                  request_handle:headers():add("HOST", "py-api-svc-912156613264.europe-west2.run.app")
+                  request_handle:headers():add("Authorization:", "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6Ik5wYUJpWHNORWpOVDF5Uy1lcVl1X2ciLCJpYXQiOjE3NTgzNDEyNjgsImV4cCI6MTc1ODM0NDg2OH0.Ez5UGrRhtqzdIbGlqKGNqqAPsgQt0W9_lygnV8m6Hsdi9-cPHqlorbQBhNXi_16F_riDJG8OVJC_YN-Omci4mg-Yi8ahIj0bsn6X5xATucPN1ZtCJRokR8aDAw521xnThemUR5BK_r1NZuyiiCPevVzi5p7hsltwAadBeJAP5rvYmMgzXUCzlKQxSB1OXhJo7Sp_UhE0H9e9DajE2MQ3WgANa5z8JHJdPiCGHy5HPEs2fgZwgF47nzo-NyjsasEedMOKM8D_r82XuKsPpQPKgbP2AMKBFH9gV1SJtLK1bzkMFyJUI6wRallgQl5D6lJ_lGvBR5wvntyK6kygxnyloQ")
                 end
           - name: envoy.filters.http.router
             typed_config:
