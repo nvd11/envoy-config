@@ -30,14 +30,14 @@ static_resources:  # Static resources configuration
           - name: envoy.filters.http.header_mutation
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.header_mutation.v3.HeaderMutation
-              request_headers_to_add:
+              add_header:
               - header:
-                  name: "authorization"
-                  value: "bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IkpJUkVJOWc3cFhZMDN0VTB6TzBKbEEiLCJpYXQiOjE3NTgzMzg5NDIsImV4cCI6MTc1ODM0MjU0Mn0.SIGNATURE_REMOVED_BY_GOOGLE"
+                  name: "x-custom-header"
+                  value: "custom-value"
                 append: false
               - header:
-                  name: "host"
-                  value: "py-api-svc-912156613264.europe-west2.run.app"
+                  name: "x-another-header"
+                  value: "another-value"
                 append: false
           - name: envoy.filters.http.router
             typed_config:
