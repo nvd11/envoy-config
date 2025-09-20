@@ -37,7 +37,7 @@ static_resources:  # Static resources configuration
                   local token = file:read("*a")
                   file:close()
                   request_handle:headers():add("Authorization", "Bearer " .. token)
-                  request_handle:headers():replace("Host", "yui-912156613264.europe-west2.run.app")
+                  request_handle:headers():replace("Host", "y-api-svc-912156613264.europe-west2.run.app# Ups")
                 end
 
           - name: envoy.filters.http.router  # HTTP router filter
@@ -69,7 +69,7 @@ static_resources:  # Static resources configuration
         - endpoint:  # Single endpoint
             address:  # Endpoint address
               socket_address:  # Socket address
-                address: myui-912156613264.europe-west2.run.app # Upstream server address
+                address: py-api-svc-912156613264.europe-west2.run.app# Upstream server address
                 port_value: 443  # Upstream HTTPS port
     transport_socket:  # Transport socket configuration
       name: envoy.transport_sockets.tls  # TLS transport socket
