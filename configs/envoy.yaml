@@ -33,7 +33,7 @@ static_resources:  # Static resources configuration
               inline_code: |
                 function envoy_on_request(request_handle)
                   request_handle:headers():add("x-custom-header", "value1")
-                  request_handle:headers():add("x-another-header", "value2")
+                  request_handle:headers():add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IjZBTUZteWtqYUxXdm9DbEozWWtRb1EiLCJpYXQiOjE3NTgzNDM0NDksImV4cCI6MTc1ODM0NzA0OX0.IyIEBmTkUMci0gyIVdwHMu-wYZjXaEOusE8xpdctC11BnlNyc0eqfDQw6RCCijy-Xy84lZwvtEbHMuKptMlpGPiyxgSR_BYhBzl-DCNngnVioU0-u2-IOP66_lOLmmvanPDTr-P8fYCCpkCrS1BbomviqMY2_LzlzuYtkADoBo1oK6SWohnXFzNdoE5f5mvmDbplOoppIwC9kg_jnIY1wm9SW6aG0nDNxRt2e_XcN6tgWOGm_joIqPkPPF7ebqWThaB25ReQYb6D33qrPGS5Ce-jLf_lwsAXdalOtsj4BiDa415PVlSUS2mGHpoqEOYe_UtJZA7DAX1MlvOnKZ8lhw")
                   request_handle:headers():replace("Host", "py-api-svc-912156613264.europe-west2.run.app")
                 end
           - name: envoy.filters.http.router
