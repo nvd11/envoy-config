@@ -27,18 +27,14 @@ static_resources:  # Static resources configuration
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog  # Stdout access log type
           http_filters:
-          - name: envoy.filters.http.header_mutation
+          - name: envoy.filters.http.lua
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.header_mutation.v3.HeaderMutation
-              add_header:
-              - header:
-                  name: "x-custom-header"
-                  value: "custom-value"
-                append: false
-              - header:
-                  name: "x-another-header"
-                  value: "another-value"
-                append: false
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+              inline_code: |
+                function envoy_on_request(request_handle)
+                  request_handle:headers():add("x-custom-header", "value1")
+                  request_handle:headers():add("x-another-header", "value2")
+                end
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
