@@ -1,0 +1,1 @@
+我需要用packer 制作1个gce 镜像， 构建一个envoy server, 帮我修改当前文件， 让其安装envoy 并以本项目的envoy.yaml 作为配置启动
