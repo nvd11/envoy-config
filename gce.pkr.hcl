@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                     packer {
+                                                                                                                                                                                                                                                                                                                                   packer {
   required_plugins {
     googlecompute = {
       version = "~> 1.1"
@@ -51,8 +51,45 @@ source "googlecompute" "default" {
       "sudo apt-get install -yq envoy",
       "echo 'Envoy installed successfully'",
       "envoy --version",
-      "echo 'Envoy version check completed successfully'"
+      "echo 'Envoy version check completed successfully'",
+     
+ 
     ]
   }
+
+
+  # validatation of accounts & permissions
+  provisioner "shell" {
+    inline = [
+       "envoy --version",
+       "gcloud --version",
+       "gcloud auth list"
+    ]
+  }
+
+
+
+  # gs://jason-hsbc_cloudbuild/envoyproxy/envoy.yaml 
+  #download envoy config file from GCS bucket AND place it in /etc/envoy/envoy.yaml
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /etc/envoy",
+      "sudo gsutil cp gs://jason-hsbc_cloudbuild/envoyproxy/envoy.yaml /etc/envoy/envoy.yaml",
+      "echo 'Envoy config file downloaded successfully'",
+      "cat /etc/envoy/envoy.yaml"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+    # 启动 envoy 在后台，并立即返回
+    "sudo nohup envoy -c /etc/envoy/envoy.yaml > /var/log/envoy-output.log 2>&1 &",
+    "echo 'Envoy started successfully in background'",
+    "sleep 3",
+    # 验证 envoy 是否在运行
+    "pgrep envoy || echo 'Envoy process not found'"
+    ]
+  }
+
 
 }
