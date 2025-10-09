@@ -19,13 +19,10 @@ static_resources:  # Static resources configuration
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager  # HTTP connection manager v3 type
           stat_prefix: ingress_http  # Statistics prefix
           access_log:  # Access log configuration
-          - name: envoy.access_loggers.file  # File access logger
+          - name: envoy.access_loggers.file  # File access logger # as we will register it to a systemd service, we only could log to a file but not stdout
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog  # File access log type
               path: "/tmp/envoy_access.log"  # Access log file path
-          - name: envoy.access_loggers.stdout  # Stdout access logger
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog  # Stdout access log type
           http_filters:
           - name: envoy.filters.http.lua
             typed_config:
@@ -33,9 +30,15 @@ static_resources:  # Static resources configuration
               inline_code: |
                 function envoy_on_request(request_handle)
                   request_handle:headers():add("x-custom-header", "value1")
-                  request_handle:headers():add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjA3ZjA3OGYyNjQ3ZThjZDAxOWM0MGRhOTU2OWU0ZjUyNDc5OTEwOTQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF1ZCI6IjMyNTU1OTQwNTU5LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3MTg4ODc2MjQwMjcwNTQ0NDg1IiwiaGQiOiJtYXBsZXF1YWQuY29tIiwiZW1haWwiOiJqYXNvbjEucGFuQG1hcGxlcXVhZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IjZBTUZteWtqYUxXdm9DbEozWWtRb1EiLCJpYXQiOjE3NTgzNDM0NDksImV4cCI6MTc1ODM0NzA0OX0.IyIEBmTkUMci0gyIVdwHMu-wYZjXaEOusE8xpdctC11BnlNyc0eqfDQw6RCCijy-Xy84lZwvtEbHMuKptMlpGPiyxgSR_BYhBzl-DCNngnVioU0-u2-IOP66_lOLmmvanPDTr-P8fYCCpkCrS1BbomviqMY2_LzlzuYtkADoBo1oK6SWohnXFzNdoE5f5mvmDbplOoppIwC9kg_jnIY1wm9SW6aG0nDNxRt2e_XcN6tgWOGm_joIqPkPPF7ebqWThaB25ReQYb6D33qrPGS5Ce-jLf_lwsAXdalOtsj4BiDa415PVlSUS2mGHpoqEOYe_UtJZA7DAX1MlvOnKZ8lhw")
                   request_handle:headers():replace("Host", "py-api-svc-912156613264.europe-west2.run.app")
                 end
+          - name: envoy.filters.http.gcp_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.GcpAuthnFilterConfig
+              http_uri:
+                uri: "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=AUDIENCE"
+                cluster: "gcp_authn"
+                timeout: 10s
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -71,3 +74,16 @@ static_resources:  # Static resources configuration
       name: envoy.transport_sockets.tls  # TLS transport socket
       typed_config:
         "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext  # Upstream TLS context type
+  - name: gcp_metadata_server
+    connect_timeout: 5s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: gcp_metadata_server
+      endpoints:
+        - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: metadata.google.internal
+                    port_value: 80

@@ -1,0 +1,138 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      protocol: TCP
+      address: 0.0.0.0
+      port_value: 8081
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 8085
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          codec_type: AUTO
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/helloworld" }
+                route:
+                  cluster: svc_hello
+                  auto_host_rewrite: true
+              - match: { prefix: "/metadata" }
+                route:
+                  cluster: metadata_service
+                  auto_host_rewrite: true
+          http_filters:
+          # This Lua snippet, moves the original Authorization header to X-Forwarded-Authorization if present, and then clears the header.
+          - name: envoy.lua
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+              inline_code: |
+                function envoy_on_request(request_handle)
+                  if (request_handle:headers():get("Authorization") ~= nil or request_handle:headers():get("Authorization") ~= "") then
+                    request_handle:logInfo("Switching Authorization header")
+                    request_handle:headers():add("X-Forwarded-Authorization", request_handle:headers():get("Authorization"))
+                    request_handle:headers():remove("Authorization")
+                  end
+                end
+          - name: envoy.filters.http.grpc_auth
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_auth.v3alpha.FilterConfig
+              service:
+                name: metadata_service
+                url: "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=AUDIENCE"
+              cluster: grpc_metadata_server
+              timeout: 0.5s
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  
+
+  clusters:
+    - name: svc_hello
+      type: strict_dns
+      connect_timeout: 28s
+      http2_protocol_options: {}
+      lb_policy: round_robin
+      dns_refresh_rate: 90s
+      metadata:
+        typed_filter_metadata:
+          envoy.filters.http.gcp_auth:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_auth.v3.Audience
+            uri: "https://helloworld-olnpr33ra-df.a.run.app"
+      load_assignment:
+        cluster_name: svc_hello
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: helloworld-olnpr33ra-df.a.run.app
+                      port_value: 443
+      dns_lookup_family: V4_ONLY
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            alpn_protocols: h2
+            validation_context:
+              trusted_ca:
+                filename: /etc/ssl/certs/ca-certificates.crt
+          sni: helloworld-olnpr33ra-df.a.run.app
+    - name: gcp_metadata_server
+      connect_timeout: 5000ms
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: gcp_metadata_server
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: metadata.google.internal
+                      port_value: 80
+    - name: service1
+      type: strict_dns
+      connect_timeout: 28s
+      http2_protocol_options: {}
+      lb_policy: round_robin
+      dns_refresh_rate: 90s
+      metadata:
+        typed_filter_metadata:
+          envoy.filters.http.gcp_auth:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_auth.v3.Audience
+            uri: "https://helloworld-48885934-olnpr33ra-df.a.run.app"
+      load_assignment:
+        cluster_name: service1
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: helloworld-48885934-olnpr33ra-df.a.run.app
+                      port_value: 443
+      dns_lookup_family: V4_ONLY
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            alpn_protocols: h2
+            validation_context:
+              trusted_ca:
+                filename: /etc/ssl/certs/ca-certificates.crt
+          sni: helloworld-48885934-olnpr33ra-df.a.run.app

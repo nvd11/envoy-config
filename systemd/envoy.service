@@ -1,0 +1,15 @@
+[Unit]
+Description=Envoy Proxy
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/envoy -c /etc/envoy/envoy.yaml
+Restart=always
+User=envoy
+Group=envoy
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=envoy
+
+[Install]
+WantedBy=multi-user.target

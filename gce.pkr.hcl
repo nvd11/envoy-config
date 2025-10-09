@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                   packer {
+packer {
   required_plugins {
     googlecompute = {
       version = "~> 1.1"
@@ -9,7 +9,7 @@
 
 variable "image_name" {
   type    = string
-  default = "packer-gce-envoy"
+  default = "packer-gce-envoy4"
 }
 
 variable "image_family" {
@@ -37,7 +37,10 @@ source "googlecompute" "default" {
       "export DEBIAN_FRONTEND=noninteractive",
       "sudo apt-get update",
       "sudo apt-get install -yq vim",
-      "sudo apt-get install -yq apt-transport-https ca-certificates curl gnupg lsb-release"
+      "sudo apt-get install -yq apt-transport-https ca-certificates curl gnupg lsb-release",
+      "sudo mkdir -p /opt",
+      "sudo touch /opt/hello.txt && sudo echo 'hello world' | sudo tee /opt/hello.txt && cat /opt/hello.txt",
+      "echo 'Basic packages installed successfully'"
     ]
   }
 
@@ -82,14 +85,74 @@ source "googlecompute" "default" {
 
   provisioner "shell" {
     inline = [
-    # 启动 envoy 在后台，并立即返回
-    "sudo nohup envoy -c /etc/envoy/envoy.yaml > /var/log/envoy-output.log 2>&1 &",
-    "echo 'Envoy started successfully in background'",
-    "sleep 3",
-    # 验证 envoy 是否在运行
-    "pgrep envoy || echo 'Envoy process not found'"
+      "sudo sh -c 'nohup envoy -c /etc/envoy/envoy.yaml > /var/log/envoy-output.log 2>&1 &'",
+      "echo 'Envoy started successfully in background'",
+      "ls -l /var/log/envoy-output.log",
+      "cat /var/log/envoy-output.log",
     ]
   }
+
+  provisioner "shell" {
+    inline = [
+      "ENVOY_PATH=$(which envoy)",
+      "if [ -z \"$ENVOY_PATH\" ]; then echo 'Envoy executable not found!' && exit 1; fi",
+      "echo \"$ENVOY_PATH\" | sudo tee /tmp/envoy_path.txt",
+      "echo 'Envoy path saved to /tmp/envoy_path.txt'"
+    ]
+  }
+
+  # Download envoy.service from GCS bucket
+  provisioner "shell" {
+    inline = [
+      "sudo gsutil cp gs://jason-hsbc_cloudbuild/envoyproxy/envoy.service /etc/systemd/system/envoy.service",
+      "echo 'Envoy systemd service file downloaded successfully'",
+      "sudo cat /etc/systemd/system/envoy.service"
+    ]
+  }
+
+  # 2. Install service (daemon-reload, enable)
+  provisioner "shell" {
+    inline = [
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable envoy",
+      "echo 'Envoy systemd service reloaded and enabled'"
+    ]
+  }
+
+  # 3. Start service
+  provisioner "shell" {
+    inline = [
+      "sudo rm -f /dev/shm/envoy_shared_memory_0", # Clean up shared memory before starting Envoy
+      "sudo touch /var/log/envoy.log", # Create log file
+      "sudo chown envoy:envoy /var/log/envoy.log", # Set ownership for envoy user
+      "sudo systemctl start envoy", # Start service
+      "sleep 5", # Give Envoy time to start
+      "echo 'Envoy systemd service started'"
+    ]
+  }
+
+  # List Envoy service startup logs
+  provisioner "shell" {
+    inline = [
+      "echo 'trying to list Envoy service startup logs:'",
+       "echo '===============================/var/log/envoy-out.log==========================================='",
+     "echo '==================================/var/log/envoy.log========================================='",
+      "sudo cat /var/log/envoy.log", # List Envoy's custom log file
+      "echo '==========================================================================='",
+      "sudo journalctl -u envoy.service --no-pager --since \"5 minutes ago\"",
+      "echo 'Envoy service startup logs listed'",
+      "echo '==========================================================================='"
+    ]
+  }
+
+  # 4. Check status
+  provisioner "shell" {
+    inline = [
+      "sudo systemctl status envoy --no-pager",
+      "echo 'Envoy systemd service status checked'"
+    ]
+  }
+
 
 
 }
