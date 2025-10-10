@@ -23,6 +23,9 @@ static_resources:  # Static resources configuration
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog  # File access log type
               path: "/tmp/envoy_access.log"  # Access log file path
+              log_format:
+                text_format_source:
+                  inline_string: "[%START_TIME%] \"%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%\" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% \"%REQ(X-FORWARDED-FOR)%\" \"%REQ(USER-AGENT)%\" \"%REQ(X-REQUEST-ID)%\" \"%REQ(:AUTHORITY)%\" \"%UPSTREAM_HOST%\" \"%REQ(:AUTHORIZATION)%\"\n"
           http_filters:
           - name: envoy.filters.http.lua
             typed_config:
@@ -36,8 +39,8 @@ static_resources:  # Static resources configuration
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.GcpAuthnFilterConfig
               http_uri:
-                uri: "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=AUDIENCE"
-                cluster: "gcp_authn"
+                uri: "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=[AUDIENCE]"
+                cluster: "gcp_metadata_server"
                 timeout: 10s
           - name: envoy.filters.http.router
             typed_config:
@@ -62,7 +65,7 @@ static_resources:  # Static resources configuration
     dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
     lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
     load_assignment:  # Load assignment configuration
-      cluster_name: myui_clusterss  # Cluster name reference
+      cluster_name: myui_cluster  # Cluster name reference
       endpoints:  # Endpoints list
       - lb_endpoints:  # Load balancing endpoints
         - endpoint:  # Single endpoint
@@ -70,6 +73,11 @@ static_resources:  # Static resources configuration
               socket_address:  # Socket address
                 address: py-api-svc-912156613264.europe-west2.run.app
                 port_value: 443  # Upstream HTTPS port
+    metadata:
+      typed_filter_metadata:
+        envoy.filters.http.gcp_authn:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          url: https://py-api-svc-912156613264.europe-west2.run.app
     transport_socket:  # Transport socket configuration
       name: envoy.transport_sockets.tls  # TLS transport socket
       typed_config:

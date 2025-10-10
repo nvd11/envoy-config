@@ -44,7 +44,7 @@ steps:
 
 
 substitutions:
-  _IMG_NAME: packer-gce-envoy4
+  _IMG_NAME: packer-gce-envoy6
 
 
 logsBucket: gs://jason-hsbc_cloudbuild/logs/
