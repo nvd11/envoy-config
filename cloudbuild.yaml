@@ -20,6 +20,11 @@ steps:
     id: upload_envoy_service
     args: ["gsutil", "cp", "systemd/envoy.service", "gs://jason-hsbc_cloudbuild/envoyproxy/envoy.service"]
 
+  # Upload setup_envoy.sh to GCS bucket
+  - name: google/cloud-sdk:slim
+    id: upload_setup_script
+    args: ["gsutil", "cp", "scripts/setup_envoy.sh", "gs://jason-hsbc_cloudbuild/envoyproxy/setup_envoy.sh"]
+
 
 
   # Initialize Packer

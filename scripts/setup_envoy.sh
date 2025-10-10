@@ -27,11 +27,6 @@ sudo gsutil cp gs://jason-hsbc_cloudbuild/envoyproxy/envoy.yaml /etc/envoy/envoy
 echo 'Envoy config file downloaded successfully'
 cat /etc/envoy/envoy.yaml
 
-sudo sh -c 'nohup envoy -c /etc/envoy/envoy.yaml > /var/log/envoy-output.log 2>&1 &'
-echo 'Envoy started successfully in background'
-ls -l /var/log/envoy-output.log
-cat /var/log/envoy-output.log
-
 ENVOY_PATH=$(which envoy)
 if [ -z "$ENVOY_PATH" ]; then echo 'Envoy executable not found!' && exit 1; fi
 echo "$ENVOY_PATH" | sudo tee /tmp/envoy_path.txt
@@ -63,3 +58,8 @@ echo '==========================================================================
 
 sudo systemctl status envoy --no-pager
 echo 'Envoy systemd service status checked'
+
+
+echo '===========================checking envoy process========================================'
+ps aux | grep envoy 
+echo 'Envoy process checked'
