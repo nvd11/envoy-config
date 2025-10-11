@@ -1,120 +1,234 @@
-admin:  # Admin interface configuration
-  access_log_path: /tmp/admin_access.log  # Path for admin access logs
-  address:  # Admin interface address
-    socket_address:  # Socket address configuration
-      address: 0.0.0.0  # Listen on all network interfaces
-      port_value: 9901  # Admin dashboard port
+# admin: 定义 Envoy 的管理界面配置
+admin:
+  # access_log_path: 指定管理界面访问日志的路径
+  access_log_path: /tmp/admin_access.log
+  # address: 定义管理界面的监听地址
+  address:
+    # socket_address: 使用套接字地址进行配置
+    socket_address:
+      # address: 监听所有网络接口（0.0.0.0）
+      address: 0.0.0.0
+      # port_value: 管理界面的端口号
+      port_value: 9901
 
-static_resources:  # Static resources configuration
-  listeners:  # List of listeners
-  - name: listener_0  # Listener name
-    address:  # Listener address
-      socket_address:  # Socket address
-        address: 0.0.0.0  # Bind to all IPv4 addresses
-        port_value: 10000  # Listen on port 10000
-    filter_chains:  # Filter chains configuration
-    - filters:  # List of filters
-      - name: envoy.filters.network.http_connection_manager  # HTTP connection manager filter
-        typed_config:  # Typed configuration
-          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager  # HTTP connection manager v3 type
-          stat_prefix: ingress_http  # Statistics prefix
-          access_log:  # Access log configuration
-          - name: envoy.access_loggers.file  # File access logger # as we will register it to a systemd service, we only could log to a file but not stdout
+# static_resources: 定义静态配置资源，这些资源在 Envoy 启动时加载
+static_resources:
+  # listeners: 定义一个或多个监听器，用于接收下游客户端的连接
+  listeners:
+  # - name: 定义第一个监听器的名称
+  - name: listener_0
+    # address: 定义监听器的监听地址
+    address:
+      # socket_address: 使用套接字地址进行配置
+      socket_address:
+        # address: 监听所有 IPv4 地址
+        address: 0.0.0.0
+        # port_value: 监听的端口号，这里是 80 端口（HTTP）
+        port_value: 80
+    # filter_chains: 定义监听器的过滤器链，用于处理接收到的连接
+    filter_chains:
+    # - filters: 定义过滤器链中的过滤器列表
+    - filters:
+      # - name: 指定使用 HTTP 连接管理器过滤器
+      - name: envoy.filters.network.http_connection_manager
+        # typed_config: 提供过滤器的详细、类型化的配置
+        typed_config:
+          # "@type": 指定配置的类型为 HTTP 连接管理器
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          # stat_prefix: 为此 HTTP 连接管理器生成的统计数据指定一个前缀
+          stat_prefix: ingress_http
+          # access_log: 配置访问日志
+          access_log:
+          # - name: 指定使用文件访问日志记录器
+          - name: envoy.access_loggers.file
+            # typed_config: 提供文件访问日志记录器的详细配置
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog  # File access log type
-              path: "/tmp/envoy_access.log"  # Access log file path
+              # "@type": 指定配置的类型为文件访问日志
+              "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+              # path: 指定访问日志文件的路径
+              path: "/tmp/envoy_access.log"
+              # log_format: 定义日志格式
               log_format:
+                # text_format_source: 使用内联字符串定义文本格式
                 text_format_source:
+                  # inline_string: 具体的日志格式字符串，包含各种请求和响应的详细信息
                   inline_string: "[%START_TIME%] \"%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%\" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% \"%REQ(X-FORWARDED-FOR)%\" \"%REQ(USER-AGENT)%\" \"%REQ(X-REQUEST-ID)%\" \"%REQ(:AUTHORITY)%\" \"%UPSTREAM_HOST%\" \"%REQ(:AUTHORIZATION)%\"\n"
+          # http_filters: 定义处理 HTTP 请求的过滤器列表
           http_filters:
+          # - name: 第一个 HTTP 过滤器，用于 GCP 认证
           - name: envoy.filters.http.gcp_authn
+            # typed_config: 提供 GCP 认证过滤器的详细配置
             typed_config:
+              # "@type": 指定配置的类型为 GCP 认证过滤器
               "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.GcpAuthnFilterConfig
+              # http_uri: 定义用于获取认证令牌的 HTTP URI
               http_uri:
+                # uri: 指向 GCP 元数据服务器以获取身份令牌的 URI
                 uri: "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=[AUDIENCE]"
+                # cluster: 指定用于连接元数据服务器的集群
                 cluster: "gcp_metadata_server"
+                # timeout: 请求元数据服务器的超时时间
                 timeout: 10s
+          # - name: 最后一个 HTTP 过滤器，必须是路由器过滤器，用于将请求路由到上游集群
           - name: envoy.filters.http.router
+            # typed_config: 提供路由器过滤器的详细配置
             typed_config:
+              # "@type": 指定配置的类型为路由器
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          # route_config: 定义路由配置
           route_config:
+            # name: 路由配置的名称
             name: local_route
+            # virtual_hosts: 定义虚拟主机列表
             virtual_hosts:
+            # - name: 定义一个虚拟主机的名称
             - name: multi_service_host
+              # domains: 此虚拟主机匹配的域名列表，"*" 表示匹配所有域名
               domains: ["*"]
+              # routes: 定义此虚拟主机的路由规则列表
               routes:
+              # - match: 定义第一个路由规则的匹配条件
               - match:
+                  # prefix: 匹配以 "/pyapi" 为前缀的请求路径
                   prefix: "/pyapi"
+                # route: 定义匹配成功后的路由行为
                 route:
+                  # cluster: 将请求路由到名为 "py_api_svc_cluster" 的集群
                   cluster: py_api_svc_cluster
+                  # prefix_rewrite: 在转发到上游之前，将请求路径的前缀重写为 "/"
                   prefix_rewrite: "/"
+                  # host_rewrite_literal: 将请求的 Host 头重写为指定的字面值
                   host_rewrite_literal: py-api-svc-912156613264.europe-west2.run.app
+              # - match: 定义第二个路由规则的匹配条件
               - match:
+                  # prefix: 匹配以 "/myui" 为前缀的请求路径
                   prefix: "/myui"
+                # route: 定义匹配成功后的路由行为
                 route:
+                  # cluster: 将请求路由到名为 "myui_cluster" 的集群
                   cluster: myui_cluster
+                  # prefix_rewrite: 在转发到上游之前，将请求路径的前缀重写为 "/"
                   prefix_rewrite: "/"
+                  # host_rewrite_literal: 将请求的 Host 头重写为指定的字面值
                   host_rewrite_literal: myui-912156613264.europe-west2.run.app
-                
 
-
-  clusters:  # Upstream clusters configuration
-  - name: py_api_svc_cluster  # Cluster name
-    connect_timeout: 5s  # Connection timeout
-    type: LOGICAL_DNS  # Service discovery type: logical DNS
-    dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
-    lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
-    load_assignment:  # Load assignment configuration
-      cluster_name: py_api_svc_cluster  # Cluster name reference
-      endpoints:  # Endpoints list
-      - lb_endpoints:  # Load balancing endpoints
-        - endpoint:  # Single endpoint
-            address:  # Endpoint address
-              socket_address:  # Socket address
-                address: py-api-svc-912156613264.europe-west2.run.app
-                port_value: 443  # Upstream HTTPS port
-    metadata:
-      typed_filter_metadata:
-        envoy.filters.http.gcp_authn:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
-          url: https://py-api-svc-912156613264.europe-west2.run.app
-    transport_socket:  # Transport socket configuration
-      name: envoy.transport_sockets.tls  # TLS transport socket
-      typed_config:
-        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext  # Upstream TLS context type
-  - name: myui_cluster  # Cluster name
-    connect_timeout: 5s  # Connection timeout
-    type: LOGICAL_DNS  # Service discovery type: logical DNS
-    dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
-    lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
-    load_assignment:  # Load assignment configuration
-      cluster_name: myui_cluster  # Cluster name reference
-      endpoints:  # Endpoints list
-      - lb_endpoints:  # Load balancing endpoints
-        - endpoint:  # Single endpoint
-            address:  # Endpoint address
-              socket_address:  # Socket address
-                address: myui-912156613264.europe-west2.run.app
-                port_value: 443  # Upstream HTTPS port
-    metadata:
-      typed_filter_metadata:
-        envoy.filters.http.gcp_authn:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
-          url: https://myui-912156613264.europe-west2.run.app
-    transport_socket:  # Transport socket configuration
-      name: envoy.transport_sockets.tls  # TLS transport socket
-      typed_config:
-        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext  # Upstream TLS context type
-  - name: gcp_metadata_server
+  # clusters: 定义一个或多个上游集群，Envoy 会将请求代理到这些集群
+  clusters:
+  # - name: 定义第一个集群的名称，用于 Python API 服务
+  - name: py_api_svc_cluster
+    # connect_timeout: 与上游主机建立连接的超时时间
     connect_timeout: 5s
-    type: strict_dns
-    lb_policy: round_robin
+    # type: 服务发现类型，LOGICAL_DNS 表示 Envoy 会定期解析 DNS 以获取端点
+    type: LOGICAL_DNS
+    # dns_lookup_family: DNS 解析时只使用 IPv4
+    dns_lookup_family: V4_ONLY
+    # lb_policy: 负载均衡策略，ROUND_ROBIN 表示轮询
+    lb_policy: ROUND_ROBIN
+    # load_assignment: 静态地定义集群的端点
     load_assignment:
-      cluster_name: gcp_metadata_server
+      # cluster_name: 关联的集群名称
+      cluster_name: py_api_svc_cluster
+      # endpoints: 端点列表
       endpoints:
+      # - lb_endpoints: 负载均衡端点列表
+      - lb_endpoints:
+        # - endpoint: 单个端点
+        - endpoint:
+            # address: 端点地址
+            address:
+              # socket_address: 使用套接字地址进行配置
+              socket_address:
+                # address: 上游服务的主机名
+                address: py-api-svc-912156613264.europe-west2.run.app
+                # port_value: 上游服务的端口号，这里是 443 (HTTPS)
+                port_value: 443
+    # metadata: 为集群添加元数据，可被其他过滤器使用
+    metadata:
+      # typed_filter_metadata: 为特定过滤器提供类型化的元数据
+      typed_filter_metadata:
+        # envoy.filters.http.gcp_authn: 为 GCP 认证过滤器提供元数据
+        envoy.filters.http.gcp_authn:
+          # "@type": 指定元数据类型为 Audience
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          # url: 指定用于生成 JWT 的目标受众（audience）
+          url: https://py-api-svc-912156613264.europe-west2.run.app
+    # transport_socket: 配置与上游主机通信时使用的传输套接字，例如 TLS
+    transport_socket:
+      # name: 指定使用 TLS 传输套接字
+      name: envoy.transport_sockets.tls
+      # typed_config: 提供 TLS 的详细配置
+      typed_config:
+        # "@type": 指定配置类型为上游 TLS 上下文
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+  # - name: 定义第二个集群的名称，用于 UI 服务
+  - name: myui_cluster
+    # connect_timeout: 连接超时时间
+    connect_timeout: 5s
+    # type: 服务发现类型为逻辑 DNS
+    type: LOGICAL_DNS
+    # dns_lookup_family: 只查找 IPv4 地址
+    dns_lookup_family: V4_ONLY
+    # lb_policy: 负载均衡策略为轮询
+    lb_policy: ROUND_ROBIN
+    # load_assignment: 静态端点分配
+    load_assignment:
+      # cluster_name: 关联的集群名称
+      cluster_name: myui_cluster
+      # endpoints: 端点列表
+      endpoints:
+      # - lb_endpoints: 负载均衡端点列表
+      - lb_endpoints:
+        # - endpoint: 单个端点
+        - endpoint:
+            # address: 端点地址
+            address:
+              # socket_address: 使用套接字地址进行配置
+              socket_address:
+                # address: 上游服务的主机名
+                address: myui-912156613264.europe-west2.run.app
+                # port_value: 上游服务的端口号，这里是 443 (HTTPS)
+                port_value: 443
+    # metadata: 为集群添加元数据
+    metadata:
+      # typed_filter_metadata: 为 GCP 认证过滤器提供类型化的元数据
+      typed_filter_metadata:
+        # envoy.filters.http.gcp_authn: 过滤器名称
+        envoy.filters.http.gcp_authn:
+          # "@type": 指定元数据类型为 Audience
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          # url: 指定用于生成 JWT 的目标受众
+          url: https://myui-912156613264.europe-west2.run.app
+    # transport_socket: 配置上游连接使用 TLS
+    transport_socket:
+      # name: 指定使用 TLS 传输套接字
+      name: envoy.transport_sockets.tls
+      # typed_config: 提供 TLS 的详细配置
+      typed_config:
+        # "@type": 指定配置类型为上游 TLS 上下文
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+  # - name: 定义第三个集群，用于连接 GCP 元数据服务器
+  - name: gcp_metadata_server
+    # connect_timeout: 连接超时时间
+    connect_timeout: 5s
+    # type: 服务发现类型，strict_dns 表示 Envoy 会解析所有返回的 IP 地址并单独连接
+    type: strict_dns
+    # lb_policy: 负载均衡策略为轮询
+    lb_policy: round_robin
+    # load_assignment: 静态端点分配
+    load_assignment:
+      # cluster_name: 关联的集群名称
+      cluster_name: gcp_metadata_server
+      # endpoints: 端点列表
+      endpoints:
+        # - lb_endpoints: 负载均衡端点列表
         - lb_endpoints:
+            # - endpoint: 单个端点
             - endpoint:
+                # address: 端点地址
                 address:
+                  # socket_address: 使用套接字地址进行配置
                   socket_address:
+                    # address: GCP 元数据服务器的内部主机名
                     address: metadata.google.internal
+                    # port_value: 元数据服务器的端口号
                     port_value: 80

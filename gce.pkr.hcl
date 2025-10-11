@@ -9,7 +9,7 @@ packer {
 
 variable "image_name" {
   type    = string
-  default = "packer-gce-envoy6"
+  default = "packer-gce-envoy"
 }
 
 variable "image_family" {
