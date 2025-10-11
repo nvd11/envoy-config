@@ -27,14 +27,6 @@ static_resources:  # Static resources configuration
                 text_format_source:
                   inline_string: "[%START_TIME%] \"%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%\" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% \"%REQ(X-FORWARDED-FOR)%\" \"%REQ(USER-AGENT)%\" \"%REQ(X-REQUEST-ID)%\" \"%REQ(:AUTHORITY)%\" \"%UPSTREAM_HOST%\" \"%REQ(:AUTHORIZATION)%\"\n"
           http_filters:
-          - name: envoy.filters.http.lua
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-              inline_code: |
-                function envoy_on_request(request_handle)
-                  request_handle:headers():add("x-custom-header", "value1")
-                  request_handle:headers():replace("Host", "py-api-svc-912156613264.europe-west2.run.app")
-                end
           - name: envoy.filters.http.gcp_authn
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.GcpAuthnFilterConfig
@@ -48,24 +40,32 @@ static_resources:  # Static resources configuration
           route_config:
             name: local_route
             virtual_hosts:
-            - name: myui_redirect
+            - name: multi_service_host
               domains: ["*"]
               routes:
               - match:
-                  prefix: "/"
+                  prefix: "/pyapi"
+                route:
+                  cluster: py_api_svc_cluster
+                  prefix_rewrite: "/"
+                  host_rewrite_literal: py-api-svc-912156613264.europe-west2.run.app
+              - match:
+                  prefix: "/myui"
                 route:
                   cluster: myui_cluster
+                  prefix_rewrite: "/"
+                  host_rewrite_literal: myui-912156613264.europe-west2.run.app
                 
 
 
   clusters:  # Upstream clusters configuration
-  - name: myui_cluster  # Cluster name
+  - name: py_api_svc_cluster  # Cluster name
     connect_timeout: 5s  # Connection timeout
     type: LOGICAL_DNS  # Service discovery type: logical DNS
     dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
     lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
     load_assignment:  # Load assignment configuration
-      cluster_name: myui_cluster  # Cluster name reference
+      cluster_name: py_api_svc_cluster  # Cluster name reference
       endpoints:  # Endpoints list
       - lb_endpoints:  # Load balancing endpoints
         - endpoint:  # Single endpoint
@@ -78,6 +78,29 @@ static_resources:  # Static resources configuration
         envoy.filters.http.gcp_authn:
           "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
           url: https://py-api-svc-912156613264.europe-west2.run.app
+    transport_socket:  # Transport socket configuration
+      name: envoy.transport_sockets.tls  # TLS transport socket
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext  # Upstream TLS context type
+  - name: myui_cluster  # Cluster name
+    connect_timeout: 5s  # Connection timeout
+    type: LOGICAL_DNS  # Service discovery type: logical DNS
+    dns_lookup_family: V4_ONLY  # Use only IPv4 for DNS lookups
+    lb_policy: ROUND_ROBIN  # Load balancing policy: round robin
+    load_assignment:  # Load assignment configuration
+      cluster_name: myui_cluster  # Cluster name reference
+      endpoints:  # Endpoints list
+      - lb_endpoints:  # Load balancing endpoints
+        - endpoint:  # Single endpoint
+            address:  # Endpoint address
+              socket_address:  # Socket address
+                address: myui-912156613264.europe-west2.run.app
+                port_value: 443  # Upstream HTTPS port
+    metadata:
+      typed_filter_metadata:
+        envoy.filters.http.gcp_authn:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          url: https://myui-912156613264.europe-west2.run.app
     transport_socket:  # Transport socket configuration
       name: envoy.transport_sockets.tls  # TLS transport socket
       typed_config:
