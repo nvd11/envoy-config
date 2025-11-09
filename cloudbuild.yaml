@@ -46,7 +46,7 @@ steps:
 substitutions:
   _IMG_NAME: packer-gce-envoy
 
-
+serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gserviceaccount.com"
 logsBucket: gs://jason-hsbc_cloudbuild/logs/
 options: # https://cloud.google.com/cloud-build/docs/build-config#options
   logging: GCS_ONLY # or CLOUD_LOGGING_ONLY https://cloud.google.com/cloud-build/docs/build-config#logging
