@@ -124,6 +124,20 @@ static_resources:
                   prefix_rewrite: "/"
                   # host_rewrite_literal: 将请求的 Host 头重写为指定的字面值
                   host_rewrite_literal: myui-912156613264.europe-west2.run.app
+              # - match: 定义新的路由规则
+              - match:
+                  # prefix: 匹配以 "/chat-api-svc" 为前缀的请求路径
+                  prefix: "/chat-api-svc"
+                # route: 定义匹配成功后的路由行为
+                route:
+                  # cluster: 将请求路由到名为 "chat_api_svc_cluster" 的集群
+                  cluster: chat_api_svc_cluster
+                  # timeout: 将超时时间增加到 300 秒
+                  timeout: 300s
+                  # prefix_rewrite: 在转发到上游之前，将请求路径的前缀重写为 "/"
+                  prefix_rewrite: "/"
+                  # host_rewrite_literal: 将请求的 Host 头重写为指定的字面值
+                  host_rewrite_literal: py-chat-svc-7hq3m4pdya-nw.a.run.app
 
   # clusters: 定义一个或多个上游集群，Envoy 会将请求代理到这些集群
   clusters:
@@ -211,6 +225,52 @@ static_resources:
           "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
           # url: 指定用于生成 JWT 的目标受众
           url: https://myui-912156613264.europe-west2.run.app
+    # transport_socket: 配置上游连接使用 TLS
+    transport_socket:
+      # name: 指定使用 TLS 传输套接字
+      name: envoy.transport_sockets.tls
+      # typed_config: 提供 TLS 的详细配置
+      typed_config:
+        # "@type": 指定配置类型为上游 TLS 上下文
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+  # - name: 定义新的集群，用于 Chat API 服务
+  - name: chat_api_svc_cluster
+    # connect_timeout: 连接超时时间
+    connect_timeout: 5s
+    # type: 服务发现类型为逻辑 DNS
+    type: LOGICAL_DNS
+    # dns_lookup_family: 只查找 IPv4 地址
+    dns_lookup_family: V4_ONLY
+    # lb_policy: 负载均衡策略为轮询
+    lb_policy: ROUND_ROBIN
+    # load_assignment: 静态端点分配
+    load_assignment:
+      # cluster_name: 关联的集群名称
+      cluster_name: chat_api_svc_cluster
+      # endpoints: 端点列表
+      endpoints:
+      # - lb_endpoints: 负载均衡端点列表
+      - lb_endpoints:
+        # - endpoint: 单个端点
+        - endpoint:
+            # address: 端点地址
+            address:
+              # socket_address: 使用套接字地址进行配置
+              socket_address:
+                # address: 上游服务的主机名
+                address: py-chat-svc-7hq3m4pdya-nw.a.run.app
+                # port_value: 上游服务的端口号，这里是 443 (HTTPS)
+                port_value: 443
+    # metadata: 为集群添加元数据
+    metadata:
+      # typed_filter_metadata: 为 GCP 认证过滤器提供类型化的元数据
+      typed_filter_metadata:
+        # envoy.filters.http.gcp_authn: 过滤器名称
+        envoy.filters.http.gcp_authn:
+          # "@type": 指定元数据类型为 Audience
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          # url: 指定用于生成 JWT 的目标受众
+          url: https://py-chat-svc-7hq3m4pdya-nw.a.run.app
     # transport_socket: 配置上游连接使用 TLS
     transport_socket:
       # name: 指定使用 TLS 传输套接字
