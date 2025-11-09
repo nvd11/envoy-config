@@ -15,6 +15,19 @@ admin:
 static_resources:
   # listeners: 定义一个或多个监听器，用于接收下游客户端的连接
   listeners:
+  # Listener for PostgreSQL Proxy
+  - name: listener_psql
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 5432
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.tcp_proxy
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.tcp_proxy.v3.TcpProxy
+          stat_prefix: psql_tcp
+          cluster: "cloud_sql_psql_cluster"
   # - name: 定义第一个监听器的名称
   - name: listener_0
     # address: 定义监听器的监听地址
@@ -206,6 +219,21 @@ static_resources:
       typed_config:
         # "@type": 指定配置类型为上游 TLS 上下文
         "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+  # - name: Cluster for Cloud SQL PostgreSQL
+  - name: cloud_sql_psql_cluster
+    connect_timeout: 5s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: cloud_sql_psql_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                # This should be the private IP of your Cloud SQL instance
+                address: "10.195.208.3"
+                port_value: 5432
   # - name: 定义第三个集群，用于连接 GCP 元数据服务器
   - name: gcp_metadata_server
     # connect_timeout: 连接超时时间
