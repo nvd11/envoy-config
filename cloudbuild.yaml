@@ -1,0 +1,52 @@
+steps:
+  # Check if image exists and delete it
+  - name: google/cloud-sdk:slim
+    id: check_and_delete_image
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        if gcloud compute images list --project="$PROJECT_ID" --filter="name:$_IMG_NAME" --format="value(name)" | grep -q "$_IMG_NAME"; then
+          gcloud compute images delete $_IMG_NAME --quiet --project="$PROJECT_ID";
+        fi
+
+  # Upload envoy.yaml to GCS bucket
+  - name: google/cloud-sdk:slim
+    id: upload_envoy_config
+    args: ["gsutil", "cp", "configs/envoy.yaml", "gs://jason-hsbc_cloudbuild/envoyproxy/envoy.yaml"]
+
+  # Upload envoy.service to GCS bucket
+  - name: google/cloud-sdk:slim
+    id: upload_envoy_service
+    args: ["gsutil", "cp", "systemd/envoy.service", "gs://jason-hsbc_cloudbuild/envoyproxy/envoy.service"]
+
+  # Upload setup_envoy.sh to GCS bucket
+  - name: google/cloud-sdk:slim
+    id: upload_setup_script
+    args: ["gsutil", "cp", "scripts/setup_envoy.sh", "gs://jason-hsbc_cloudbuild/envoyproxy/setup_envoy.sh"]
+
+
+
+  # Initialize Packer
+  - name: hashicorp/packer:latest
+    id: init_packer
+    args:
+      - init
+      - gce.pkr.hcl
+
+  # Build the image
+  - name: hashicorp/packer:latest
+    id: build_image
+    args:
+      - build
+      - gce.pkr.hcl
+
+
+
+substitutions:
+  _IMG_NAME: packer-gce-envoy
+
+serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gserviceaccount.com"
+logsBucket: gs://jason-hsbc_cloudbuild/logs/
+options: # https://cloud.google.com/cloud-build/docs/build-config#options
+  logging: GCS_ONLY # or CLOUD_LOGGING_ONLY https://cloud.google.com/cloud-build/docs/build-config#logging

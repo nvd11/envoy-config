@@ -1,0 +1,54 @@
+steps:
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: create_instance_template
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -e
+    TEMPLATE_NAME="my-envoy-template-$(date +%s)"
+    echo "Creating new instance template: $$TEMPLATE_NAME"
+    gcloud compute instance-templates create $$TEMPLATE_NAME \
+      --project=jason-hsbc \
+      --image=packer-gce-envoy \
+      --image-project=jason-hsbc \
+      --region=europe-west2 \
+      --machine-type=e2-medium \
+      --subnet=tf-vpc0-subnet0 \
+      --service-account=terraform@jason-hsbc.iam.gserviceaccount.com \
+      --scopes=https://www.googleapis.com/auth/cloud-platform \
+      --tags=http-server,https-server \
+      --address=34.39.2.90
+    # Write the template name to a file to be used by the next step
+    echo $$TEMPLATE_NAME > /workspace/template_name.txt
+    echo "Successfully created instance template."
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: rolling_update_mig
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    set -e
+    TEMPLATE_NAME=$(cat /workspace/template_name.txt)
+    # Dynamically find the current MIG name
+    MIG_NAME=$(gcloud compute instance-groups managed list --project=jason-hsbc --filter="name~'my-envoy-'" --format="value(name)")
+    if [ -z "$$MIG_NAME" ]; then
+      echo "ERROR: No managed instance group found with prefix 'my-envoy-'"
+      exit 1
+    fi
+    echo "Found MIG: $$MIG_NAME. Applying new template: $$TEMPLATE_NAME"
+    gcloud compute instance-groups managed set-instance-template $$MIG_NAME \
+      --project=jason-hsbc \
+      --zone=europe-west2-c \
+      --template=$$TEMPLATE_NAME
+    echo "Successfully set new instance template for MIG."
+
+# When using a custom service account, logging options must be explicitly set.
+
+# Note: This pipeline assumes the 'my-envoy' MIG already exists.
+# It also assumes the 'packer-gce-envoy' image has been updated by a separate pipeline.
+serviceAccount: "projects/jason-hsbc/serviceAccounts/terraform@jason-hsbc.iam.gserviceaccount.com"
+logsBucket: gs://jason-hsbc_cloudbuild/logs/
+options: # https://cloud.google.com/cloud-build/docs/build-config#options
+  logging: GCS_ONLY # or CLOUD_LOGGING_ONLY https://cloud.google.com/cloud-build/docs/build-config#logging
