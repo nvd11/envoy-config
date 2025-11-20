@@ -6,8 +6,8 @@ admin:
   address:
     # socket_address: 使用套接字地址进行配置
     socket_address:
-      # address: 监听所有网络接口（0.0.0.0）
-      address: 0.0.0.0
+      # address: 监听所有 IPv4 地址
+      address: 0.0.0.0 # This makes the listener accept traffic on all IPs of the VM
       # port_value: 管理界面的端口号
       port_value: 9901
 
@@ -35,7 +35,7 @@ static_resources:
       # socket_address: 使用套接字地址进行配置
       socket_address:
         # address: 监听所有 IPv4 地址
-        address: 0.0.0.0
+        address: 0.0.0.0 # This makes the listener accept traffic on all IPs of the VM
         # port_value: 监听的端口号，这里是 80 端口（HTTP）
         port_value: 80
     # filter_chains: 定义监听器的过滤器链，用于处理接收到的连接
@@ -96,8 +96,8 @@ static_resources:
             virtual_hosts:
             # - name: 定义一个虚拟主机的名称
             - name: multi_service_host
-              # domains: 此虚拟主机匹配的域名列表，"*" 表示匹配所有域名
-              domains: ["*"]
+              # Tells the Virtual Host to use these routes for any requested domain (* is a wildcard).
+              domains: ["*"] # This ensures routing works for access via IP address as well as domain names.
               # routes: 定义此虚拟主机的路由规则列表
               routes:
               # - match: 定义第一个路由规则的匹配条件
