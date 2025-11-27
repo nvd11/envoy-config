@@ -10,6 +10,16 @@ steps:
           gcloud compute images delete $_IMG_NAME --quiet --project="$PROJECT_ID";
         fi
 
+  # Generate Envoy configuration from fragments
+  - name: python:3.9-slim
+    id: generate_envoy_config
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        python3 scripts/combine_routes.py
+        mv configs/envoy_generated.yaml configs/envoy.yaml
+
   # Upload envoy.yaml to GCS bucket
   - name: google/cloud-sdk:slim
     id: upload_envoy_config
