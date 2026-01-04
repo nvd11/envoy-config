@@ -1,0 +1,33 @@
+routes:
+  - match:
+      prefix: "/python-template-app"
+    route:
+      cluster: py_template_app_cluster
+      timeout: 300s
+      prefix_rewrite: "/"
+      host_rewrite_literal: python-template-app-912156613264.europe-west2.run.app
+
+clusters:
+  - name: py_template_app_cluster
+    connect_timeout: 5s
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: py_template_app_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: python-template-app-912156613264.europe-west2.run.app
+                port_value: 443
+    metadata:
+      typed_filter_metadata:
+        envoy.filters.http.gcp_authn:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.gcp_authn.v3.Audience
+          url: https://python-template-app-912156613264.europe-west2.run.app
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
