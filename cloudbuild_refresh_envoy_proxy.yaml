@@ -18,7 +18,7 @@ steps:
       --service-account=terraform@jason-hsbc.iam.gserviceaccount.com \
       --scopes=https://www.googleapis.com/auth/cloud-platform \
       --tags=http-server,https-server \
-      --address=34.39.2.90
+      --address=34.153.134.240
     # Write the template name to a file to be used by the next step
     echo $$TEMPLATE_NAME > /workspace/template_name.txt
     echo "Successfully created instance template."
