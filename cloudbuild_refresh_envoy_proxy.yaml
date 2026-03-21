@@ -38,10 +38,12 @@ steps:
       exit 1
     fi
     echo "Found MIG: $$MIG_NAME. Applying new template: $$TEMPLATE_NAME"
-    gcloud compute instance-groups managed set-instance-template $$MIG_NAME \
+    gcloud compute instance-groups managed rolling-action start-update $$MIG_NAME \
       --project=jason-hsbc \
       --zone=europe-west2-c \
-      --template=$$TEMPLATE_NAME
+      --version=template=$$TEMPLATE_NAME \
+      --max-surge=0 \
+      --max-unavailable=1
     echo "Successfully set new instance template for MIG."
 
 # When using a custom service account, logging options must be explicitly set.
